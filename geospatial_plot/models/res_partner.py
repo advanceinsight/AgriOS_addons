@@ -42,13 +42,20 @@ class ResPartner(models.Model):
         store=True,
         tracking=True,
     )
+    # total_acreage = fields.Float(
+    #     "Total Plot Acreage",
+    #     compute="_compute_acreage",
+    #     store=True,
+    # )
+
     total_acreage = fields.Float(
         "Total Plot Acreage",
-        compute="_compute_acreage",
+        compute="_compute_land_acreage",
         store=True,
     )
 
-    @api.depends("plot_ids", "plot_ids.plot_size_sqm")
+    # @api.depends("plot_ids", "plot_ids.plot_size_sqm")
+    @api.depends("plot_ids", "plot_ids.plot_size_sqm", "plot_uom_id")
     def _compute_land_acreage(self):
         for this in self:
             if not this.plot_ids:
@@ -62,11 +69,20 @@ class ResPartner(models.Model):
             leased_plots = this.plot_ids - owned_plots
             acreage_owned_sqm = sum(owned_plots.mapped("plot_size_sqm"))
             acreage_leased_sqm = sum(leased_plots.mapped("plot_size_sqm"))
-            this.own_acreage = this._compute_land_acreage(acreage_owned_sqm)
-            this.own_acreage = this._compute_land_acreage(acreage_leased_sqm)
+            # this.own_acreage = this._compute_land_acreage(acreage_owned_sqm)
+            # this.own_acreage = this._compute_land_acreage(acreage_leased_sqm)
+            # this.total_acreage = this.own_acreage + this.leased_acreage
+            this.own_acreage = this._convert_land_acreage(acreage_owned_sqm)
+            this.leased_acreage = this._convert_land_acreage(acreage_leased_sqm)
             this.total_acreage = this.own_acreage + this.leased_acreage
 
-    def _compute_land_acreage(self, acreage_sqm):
+    # def _compute_land_acreage(self, acreage_sqm):
+    #     """Compute plot size in selected unit of measurement."""
+    #     self.ensure_one()
+    #     reference_uom = self.env.ref("uom.uom_square_meter")
+    #     return reference_uom._compute_quantity(acreage_sqm, self.plot_uom_id)
+    
+    def _convert_land_acreage(self, acreage_sqm):
         """Compute plot size in selected unit of measurement."""
         self.ensure_one()
         reference_uom = self.env.ref("uom.uom_square_meter")
